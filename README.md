@@ -41,6 +41,11 @@ sudo systemctl status postgresql
 sudo -i -u postgres
 ```
 
+### Đã có tài khoản postgresql
+```text
+psql -U [người dùng] -d postgres
+```
+
 ### Truy cập giao diện dòng lệnh (CLI) của PostgreSQL
 ```bash
 psql
@@ -436,74 +441,161 @@ frontend/
 
 ---
 
-## 4. Cấu trúc bảng trong db
+# PostgreSQL
+
+**Sơ đồ postgresql:** [biometric_attendance_system](https://dbdiagram.io/d/biometric_attendance_system-69671f14d6e030a024fa19f5)
+
+## 1. Cấu trúc bảng trong db
+Lệnh lấy tất cả kiểu dữ liệu trong cơ sở dữ liệu
+```text
+SELECT 
+    table_name, 
+    column_name, 
+    data_type, 
+    is_nullable,
+    character_maximum_length AS max_len
+FROM 
+    information_schema.columns 
+WHERE 
+    table_schema = 'public'
+ORDER BY 
+    table_name, 
+    ordinal_position;
+```
 
 ```text
-    table_name    |     column_name      |     data_type     | is_nullable | column_default
-------------------+----------------------+-------------------+-------------+----------------
- account          | username             | character varying | NO          |
- account          | password             | character varying | NO          |
- account          | role                 | integer           | NO          |
- account          | user_id              | character varying | YES         |
- attendance       | attendance_id        | character varying | NO          |
- attendance       | user_id              | character varying | YES         |
- attendance       | subject_id           | character varying | YES         |
- attendance       | class_id             | character varying | YES         |
- attendance       | attendance_date      | date              | YES         |
- attendance       | attendance_status    | integer           | YES         |
- class            | class_id             | character varying | NO          |
- class            | major_id             | character varying | YES         |
- class            | class_name           | character varying | YES         |
- class            | course               | character varying | YES         |
- class            | enrollment_year      | integer           | YES         |
- education_level  | education_level_id   | character varying | NO          |
- education_level  | education_level_name | character varying | NO          |
- faculty          | faculty_id           | character varying | NO          |
- faculty          | faculty_name         | character varying | NO          |
- fingerprint      | fingerprint_id       | character varying | NO          |
- fingerprint      | user_id              | character varying | YES         |
- fingerprint      | class_id             | character varying | YES         |
- major            | major_id             | character varying | NO          |
- major            | faculty_id           | character varying | YES         |
- major            | major_name           | character varying | NO          |
- personal_profile | student_id           | character varying | NO          |
- personal_profile | faculty_id           | character varying | YES         |
- personal_profile | class_id             | character varying | YES         |
- personal_profile | education_level_id   | character varying | YES         |
- personal_profile | major_id             | character varying | YES         |
- personal_profile | date_of_birth        | date              | YES         |
- personal_profile | gender               | integer           | YES         |
- personal_profile | place_of_birth       | character varying | YES         |
- personal_profile | permanent_address    | text              | YES         |
- personal_profile | temporary_address    | text              | YES         |
- personal_profile | phone_number         | character varying | YES         |
- room             | room_id              | character varying | NO          |
- room             | room_name            | character varying | NO          |
- schedule         | schedule_id          | character varying | NO          |
- schedule         | subject_id           | character varying | YES         |
- schedule         | room_id              | character varying | YES         |
- schedule         | user_id              | character varying | YES         |
- schedule         | schedule_date        | date              | YES         |
- schedule         | group_name           | character varying | YES         |
- schedule         | start                | integer           | YES         |
- schedule         | out                  | integer           | YES         |
- student_group    | group_id             | character varying | NO          |
- student_group    | user_id              | character varying | NO          |
- subject          | subject_id           | character varying | NO          |
- subject          | subject_name         | character varying | NO          |
- subject          | credits              | integer           | NO          |
- subject          | theory               | integer           | NO          |
- subject          | practice             | integer           | NO          |
- subject          | semester             | integer           | NO          |
- users            | user_id              | character varying | NO          |
- users            | faculty_id           | character varying | YES         |
- users            | class_id             | character varying | YES         |
- users            | full_name            | character varying | NO          |
+     table_name      |  column_name   |        data_type         | is_nullable | max_len
+---------------------+----------------+--------------------------+-------------+---------
+ account             | user_id        | character varying        | NO          |      32
+ account             | password_hash  | character varying        | NO          |     255
+ account             | role           | character                | NO          |       1
+ attendance          | attend_id      | integer                  | NO          |
+ attendance          | schedule_id    | integer                  | NO          |
+ attendance          | user_id        | character varying        | NO          |      32
+ attendance          | attend_time    | timestamp with time zone | NO          |
+ attendance          | status         | boolean                  | NO          |
+ class               | class_id       | character varying        | NO          |      20
+ class               | major_id       | character varying        | NO          |      20
+ class               | edu_level_id   | character varying        | NO          |      20
+ class               | class_name     | text                     | NO          |
+ class               | course         | character varying        | NO          |      10
+ class               | enroll_year    | smallint                 | NO          |
+ course_registration | reg_id         | integer                  | NO          |
+ course_registration | user_id        | character varying        | NO          |      32
+ course_registration | subject_id     | character varying        | NO          |      20
+ course_registration | host_class_id  | character varying        | NO          |      20
+ course_registration | semester       | smallint                 | NO          |
+ course_registration | year           | smallint                 | NO          |
+ course_registration | created_at     | timestamp with time zone | NO          |
+ education_level     | edu_level_id   | character varying        | NO          |      20
+ education_level     | edu_level_name | text                     | NO          |
+ faculty             | faculty_id     | character varying        | NO          |      20
+ faculty             | faculty_name   | text                     | NO          |
+ fingerprint         | finger_id      | character varying        | NO          |      32
+ fingerprint         | user_id        | character varying        | NO          |      32
+ fingerprint         | finger_data    | bytea                    | NO          |
+ lecturer_profile    | user_id        | character varying        | NO          |      32
+ lecturer_profile    | faculty_id     | character varying        | NO          |      20
+ lecturer_profile    | degree         | text                     | NO          |
+ lecturer_profile    | research_area  | text                     | YES         |
+ major               | major_id       | character varying        | NO          |      20
+ major               | faculty_id     | character varying        | NO          |      20
+ major               | major_name     | text                     | NO          |
+ room                | room_id        | character varying        | NO          |      20
+ room                | room_name      | text                     | NO          |
+ schedule            | schedule_id    | integer                  | NO          |
+ schedule            | subject_id     | character varying        | NO          |      20
+ schedule            | room_id        | character varying        | NO          |      20
+ schedule            | lecturer_id    | character varying        | NO          |      32
+ schedule            | class_id       | character varying        | NO          |      20
+ schedule            | learn_date     | date                     | NO          |
+ schedule            | start_period   | smallint                 | NO          |
+ schedule            | end_period     | smallint                 | NO          |
+ schedule            | is_open        | boolean                  | NO          |
+ student_profile     | user_id        | character varying        | NO          |      32
+ student_profile     | birth_date     | date                     | NO          |
+ student_profile     | gender         | boolean                  | NO          |
+ student_profile     | phone          | character varying        | NO          |      15
+ student_profile     | address        | text                     | NO          |
+ subject             | subject_id     | character varying        | NO          |      20
+ subject             | subject_name   | text                     | NO          |
+ subject             | credits        | smallint                 | NO          |
+ subject             | theory         | smallint                 | NO          |
+ subject             | practice       | smallint                 | NO          |
+ subject             | semester       | smallint                 | NO          |
+ users               | user_id        | character varying        | NO          |      32
+ users               | class_id       | character varying        | YES         |      20
+ users               | full_name      | text                     | NO          |
+(60 rows)
+```
+
+## 2. Kiểu dữ liệu trường
+```text
++----------------------------------------------------------------------------------------------------------------------------------+
+| Nhóm              | Tên kiểu dữ liệu | Kích thước (Bytes)  | Mô tả & Khuyến nghị Tối ưu                                          |
++-------------------+------------------+---------------------+---------------------------------------------------------------------+
+| Chuỗi (String)    | CHAR(n)          | n bytes             | Chuỗi độ dài cố định. Nếu dữ liệu ngắn hơn n, hệ thống sẽ chèn thêm |
+|                   |                  |                     | khoảng trắng. Lưu ý: Trong Postgres, CHAR thường chậm hơn TEXT hoặc |
+|                   |                  |                     | VARCHAR vì tốn chi phí xử lý khoảng trắng thừa. Hạn chế dùng.       |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | VARCHAR(n)       | n + 1               | Chuỗi độ dài biến đổi có giới hạn. Dùng khi cần ràng buộc độ dài    |
+|                   |                  |                     | nghiệp vụ (VD: Mã sinh viên tối đa 20 ký tự).                       |
+|                   |                  |                     | Tối ưu: Tốt cho việc đảm bảo tính toàn vẹn dữ liệu (Constraint).    |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | TEXT             | Biến đổi + 1        | Chuỗi độ dài biến đổi không giới hạn.                               |
+|                   |                  |                     | Tối ưu: Đây là kiểu dữ liệu chuỗi native và tối ưu nhất của         |
+|                   |                  |                     | Postgres. Nếu không cần giới hạn độ dài cứng, hãy ưu tiên dùng TEXT.|
++-------------------+------------------+---------------------+---------------------------------------------------------------------+
+| Số nguyên (Int)   | SMALLINT         | 2 bytes             | Phạm vi: -32,768 đến +32,767.                                       |
+|                   |                  |                     | Tối ưu: Dùng tốt cho các cột như credits, semester. Tiết kiệm 50%   |
+|                   |                  |                     | dung lượng so với INTEGER.                                          |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | INTEGER (INT)    | 4 bytes             | Phạm vi: -2 tỷ đến +2 tỷ.                                           |
+|                   |                  |                     | Tối ưu: Dùng cho ID tự tăng hoặc số lượng thông thường.             |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | BIGINT           | 8 bytes             | Phạm vi cực lớn.                                                    |
+|                   |                  |                     | Lưu ý: Chỉ dùng khi INTEGER không đủ chứa (VD: ID mạng xã hội).     |
+|                   |                  |                     | Dùng thừa sẽ tốn dung lượng ổ cứng và RAM khi đánh index.           |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | SERIAL           | 4 bytes             | Tự động tăng (Auto-increment). Thực chất là tạo một INTEGER và      |
+|                   |                  |                     | gắn với một SEQUENCE.                                               |
++-------------------+------------------+---------------------+---------------------------------------------------------------------+
+| Thời gian         | DATE             | 4 bytes             | Chỉ chứa ngày (Năm-Tháng-Ngày). Không có giờ.                       |
+| (Date/Time)       |                  |                     | Tối ưu: Dùng cho ngày sinh, ngày nhập học.                          |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | TIMESTAMP        | 8 bytes             | Ngày + Giờ (Không múi giờ).                                         |
+|                   |                  |                     | Rủi ro: Nếu server chuyển vùng, dữ liệu có thể bị hiểu sai lệch.    |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | TIMESTAMPTZ      | 8 bytes             | Ngày + Giờ + Múi giờ (Lưu trữ dưới dạng UTC).                       |
+|                   |                  |                     | Tối ưu: Luôn dùng cho created_at, log_time để đảm bảo chính xác.    |
++-------------------+------------------+---------------------+---------------------------------------------------------------------+
+| Logic & Binary    | BOOLEAN          | 1 byte              | True/False.                                                         |
+|                   |                  |                     | Tối ưu: Tốt hơn so với việc dùng CHAR(1) ('Y'/'N') hay INT (0/1).   |
+|                   +------------------+---------------------+---------------------------------------------------------------------+
+|                   | BYTEA            | Biến đổi            | Mảng byte (Binary Data).                                            |
+|                   |                  |                     | Tối ưu: Phù hợp để lưu mẫu vân tay hoặc ảnh nhỏ.                    |
++-------------------+------------------+---------------------+---------------------------------------------------------------------+
 ```
 
 ---
 
-## 5. Github
+## 3. Ràng buộc toàn vẹn dữ liệu
+
+**Khóa chính (Primary Key - PK):** Đảm bảo tính duy nhất và định danh của bản ghi trong bảng.
+```text
+CONSTRAINT pk_faculty PRIMARY KEY (faculty_id)
+```
+**Khóa ngoại (Foreign Key - FK):** Đảm bảo tính toàn vẹn tham chiếu (Referential Integrity) giữa bảng con (Child Table) và bảng cha (Parent Table).
+```text
+CONSTRAINT fk_major_faculty FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id)
+```
+
+**Cú pháp nâng cao (Cascade Delete):** Áp dụng cho quan hệ phụ thuộc mạnh (Composition). Khi bản ghi cha bị xóa, bản ghi con sẽ bị xóa theo tự động.
+```text
+CONSTRAINT fk_sp_users FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+```
+
+# Github
 
 **1. Tạo repository trên [github](https://github.com/new)**
 
